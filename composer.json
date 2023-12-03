@@ -60,6 +60,8 @@
         "platform": {
             "php": "^8.1"
         },
+        "process-timeout": 1800,
+        "memory-limit": "512M",
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
