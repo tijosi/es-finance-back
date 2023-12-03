@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::any('/info', function (Request $request) {
     $var = 25;
-    phpinfo();
+    response()->json($var);
 });
 
 Route::get('/enum/{enumClass}', [Tenum::class, 'getEnumValues']);
