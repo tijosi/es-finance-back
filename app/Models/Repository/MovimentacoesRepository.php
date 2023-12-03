@@ -2,7 +2,7 @@
 
 namespace App\Models\Repository;
 
-use App\Models\interface\IMovimentacoesRepository;
+use App\Models\Interface\IMovimentacoesRepository;
 use App\Models\Movimentacoes;
 use Illuminate\Support\Facades\DB;
 

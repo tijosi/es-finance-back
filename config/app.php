@@ -157,10 +157,6 @@ return [
 
     'providers' => ServiceProvider::defaultProviders()->merge([
         /*
-         * Package Service Providers...
-         */
-        Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
-        /*
          * Application Service Providers...
          */
 
