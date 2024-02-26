@@ -21,6 +21,7 @@ class CategoriaMovimentacaoEnum {
     CONST SALARIO                           = 'SALARIO';
     CONST AJUSTE                            = 'AJUSTE';
     CONST EXTRA                             = 'EXTRA';
+    CONST ESTORNO                           = 'ESTORNO';
 
     CONST __LOCALIZADOR_LAZER               = ['lazer', 'serviÃ§os', 'casa', 'eletrÃ´nicos'];
     CONST __LOCALIZADOR_COMPRASEMGERAL      = ['supermercado'];
@@ -37,6 +38,7 @@ class CategoriaMovimentacaoEnum {
     CONST __LOCALIZADOR_AJUSTE              = null;
     CONST __LOCALIZADOR_EXTRA               = null;
     CONST __LOCALIZADOR_VESTUARIO           = ['vestuÃ¡rio'];
+    CONST __LOCALIZADOR_ESTORNO             = null;
 
     CONST __LABEL_LAZER                     = 'Lazer';
     CONST __LABEL_COMPRASEMGERAL            = 'Compras em Geral';
@@ -44,7 +46,7 @@ class CategoriaMovimentacaoEnum {
     CONST __LABEL_TRABALHO                  = 'Trabalho';
     CONST __LABEL_PRINCESA                  = 'Princesa';
     CONST __LABEL_SAUDE                     = 'Saúde';
-    CONST __LABEL_COMIDA                    = 'comida';
+    CONST __LABEL_COMIDA                    = 'Comida';
     CONST __LABEL_EDUCACAO                  = 'Educação';
     CONST __LABEL_PAGAMENTO                 = 'Pagamento';
     CONST __LABEL_OUTROS                    = 'Outros';
@@ -53,6 +55,7 @@ class CategoriaMovimentacaoEnum {
     CONST __LABEL_AJUSTE                    = 'Ajuste';
     CONST __LABEL_EXTRA                     = 'Extra';
     CONST __LABEL_VESTUARIO                 = 'Vestuário';
+    CONST __LABEL_ESTORNO                   = 'Estorno';
 
     CONST __TIPO_LAZER                      = TipoMovimentacaoEnum::DEBITO;
     CONST __TIPO_COMPRASEMGERAL             = TipoMovimentacaoEnum::DEBITO;
@@ -69,5 +72,6 @@ class CategoriaMovimentacaoEnum {
     CONST __TIPO_SALARIO                    = TipoMovimentacaoEnum::CREDITO;
     CONST __TIPO_AJUSTE                     = TipoMovimentacaoEnum::CREDITO;
     CONST __TIPO_EXTRA                      = TipoMovimentacaoEnum::CREDITO;
+    CONST __TIPO_ESTORNO                    = TipoMovimentacaoEnum::CREDITO;
 
 }

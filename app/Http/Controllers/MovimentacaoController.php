@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Movimentacao\AreaMovimentacaoEnum;
+use App\Enums\Movimentacao\CategoriaMovimentacaoEnum;
 use App\Enums\Movimentacao\StatusMovimentacaoEnum;
 use App\Enums\Movimentacao\TipoMovimentacaoEnum;
 use App\Models\Movimentacoes;
@@ -40,10 +42,12 @@ class MovimentacaoController extends Controller
         return $data;
     }
 
-    private function atualizaStatus( array $data) {
+    private function atualizaStatus( array $data ) {
 
         foreach ($data as $key => $value) {
             $value = (array) $value;
+
+            if ($value['status'] != StatusMovimentacaoEnum::PENDENTE) continue;
 
             $dtPag = new DateTime($value['dt_pagamento']);
             $dtAtual = new DateTime();
@@ -137,15 +141,50 @@ class MovimentacaoController extends Controller
 
                 $descricao = $this->getFileDescricao($tags[$key + 4][2]);
 
+                preg_match('/(\d+)\/(\d+)/', $descricao[0], $detailsParcela);
+
                 $result['movimentacoes'][] = [
                     'tipo' => $value[2] == 'DEBIT' ? TipoMovimentacaoEnum::DEBITO : TipoMovimentacaoEnum::CREDITO,
                     'dt_movimentacao' => date('Y-m-d', strtotime(substr($tags[$key + 1][2], 0, 8))),
                     'valor' => abs((float)$tags[$key + 2][2]),
+                    'parcelas' => $detailsParcela[2] ?? '1',
+                    'parcela_atual' => $detailsParcela[1] ?? '1',
                     'transacao_id' => $tags[$key + 3][2],
                     'descricao' => $descricao[0],
                     'destinatario' => $descricao[1] ?? $descricao[0],
                     'documento_destinatario' => $descricao[2] ?? NULL,
+                    'flg_warning_parcela' => false,
                 ];
+
+                if ( preg_match('/(\d+)\/(\d+)/', $descricao[0], $detailsParcela) ) {
+
+                    $dtParcela = new DateTime( date( 'Y-m-d', strtotime( substr($tags[$key + 1][2], 0, 8) ) ) );
+
+                    for ((int) $detailsParcela[1] ; (int) $detailsParcela[1] < (int) $detailsParcela[2] ; (int) $detailsParcela[1]++) {
+
+                        $parcelaAtual = $detailsParcela[1];
+                        $parcelaPosterior = ((int) $detailsParcela[1] + 1);
+
+                        $descricao[0] = str_replace($parcelaAtual . '/', $parcelaPosterior . '/', $descricao[0]);
+
+
+                        $result['movimentacoes'][] = [
+                            'tipo' => $value[2] == 'DEBIT' ? TipoMovimentacaoEnum::DEBITO : TipoMovimentacaoEnum::CREDITO,
+                            'dt_movimentacao' => $dtParcela->format('Y-m-d'),
+                            'dt_pagamento' => $dtParcela->add(new DateInterval("P1M"))->format('Y-m-d'),
+                            'valor' => abs((float)$tags[$key + 2][2]),
+                            'parcelas' => $detailsParcela[2],
+                            'parcela_atual' => $parcelaAtual,
+                            'transacao_id' => $tags[$key + 3][2],
+                            'descricao' => $descricao[0],
+                            'destinatario' => $descricao[1] ?? $descricao[0],
+                            'documento_destinatario' => $descricao[2] ?? NULL,
+                            'flg_warning_parcela' => true,
+                        ];
+
+                    }
+                }
+
             }
         }
 
@@ -176,7 +215,59 @@ class MovimentacaoController extends Controller
 
     private function importarCartao($dados) {
 
-        return $dados;
+
+        foreach ($dados['registros'] as $mov) {
+
+            $dateMov = new DateTime($mov['dt_movimentacao']);
+            $area = $meio['area'] ?? $mov['tipo'] == TipoMovimentacaoEnum::CREDITO ?
+                AreaMovimentacaoEnum::RECEITA :
+                AreaMovimentacaoEnum::DESPESA;
+
+
+            if ($mov['flg_warning_parcela']) {
+
+                $datePag = $mov['dt_pagamento'];
+                $status = $meio['status'] ?? StatusMovimentacaoEnum::PENDENTE;
+
+            } else {
+
+                $datePag = ( new DateTime($dados['dt_pagamento']) )->format('Y-m-d');
+                $status = $meio['status'] ?? $mov['tipo'] == TipoMovimentacaoEnum::CREDITO ?
+                    StatusMovimentacaoEnum::RECEBIDO :
+                    StatusMovimentacaoEnum::PAGO;
+
+            }
+
+            $insert = [
+                'dt_movimentacao' => $mov['dt_movimentacao'],
+                'mes' => $dateMov->format('m'),
+                'ano' => $dateMov->format('Y'),
+                'descricao' => $mov['descricao'],
+                'dt_pagamento' => $datePag,
+                'meio' => $mov['meio'] ?? 'CARTAO_NUBANK',
+                'parcelas' => empty($mov['parcelas']) ? '1' : $mov['parcelas'],
+                'parcela_atual' => empty($mov['parcela_atual']) ? '1' : $mov['parcela_atual'],
+                'valor' => $mov['valor'],
+                'area' => $area,
+                'grupo' => $mov['grupo'] ?? CategoriaMovimentacaoEnum::OUTROS,
+                'tipo' => $mov['tipo'] ?? NULL,
+                'status' => $status,
+                'destinatario' => $mov['destinatario'] ?? NULL
+            ];
+
+            $existe = MovimentacoesRepository::verificaExiste($insert);
+
+            if ($existe || $insert['descricao'] == 'Pagamento recebido') continue;
+
+            $inserts[] = $insert;
+
+
+        }
+
+        $repository = new MovimentacoesRepository();
+        $repository->saveLote($inserts);
+
+        return TRUE;
     }
 
     private function importarTransferencia($dados) {

@@ -64,4 +64,20 @@ class MovimentacoesRepository implements IMovimentacoesRepository {
         return $record->toArray();
     }
 
+    public static function verificaExiste ( array $item ) {
+
+        $record = DB::table('Movimentacoes')
+            ->where('dt_movimentacao', '=', $item['dt_movimentacao'])
+            ->where('mes', '=', $item['mes'])
+            ->where('ano', '=', $item['ano'])
+            ->where('meio', '=', $item['meio'])
+            ->where('parcelas', '=', $item['parcelas'])
+            ->where('parcela_atual', '=', $item['parcela_atual'])
+            ->where('descricao', '=', $item['descricao'])
+            ->where('valor', '=', $item['valor'])->exists();
+
+        return $record;
+
+    }
+
 }
