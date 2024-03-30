@@ -8,6 +8,7 @@ use App\Enums\Movimentacao\StatusMovimentacaoEnum;
 use App\Enums\Movimentacao\TipoMovimentacaoEnum;
 use App\Models\Movimentacoes;
 use App\Models\Repository\MovimentacoesRepository;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use DateInterval;
 use DateTime;
 use Exception;
@@ -44,7 +45,7 @@ class MovimentacaoController extends Controller
 
     private function atualizaStatus( array $data ) {
 
-        foreach ($data as $key => $value) {
+        foreach ($data as $value) {
             $value = (array) $value;
 
             if ($value['status'] != StatusMovimentacaoEnum::PENDENTE) continue;
@@ -72,8 +73,11 @@ class MovimentacaoController extends Controller
                 return $repositoryMov->saveLote($param);
             } else {
                 if (!empty($param['id'])) {
-                    $record = $repositoryMov->update($param);
+
+                    $repositoryMov->update($param);
+
                 } else {
+
                     $parcelas = $param['parcelas'] - $param['parcela_atual'] + 1;
 
                     for ($i=0; $i < $parcelas; $i++) {
@@ -88,7 +92,9 @@ class MovimentacaoController extends Controller
 
                         $param['parcela_atual'] += 1;
                         $param['dt_pagamento']  = ($dateMov->add(new DateInterval('P1M')))->format('Y-m-d');
+                        $param['valor'] += $param['acrescimo'] ?? 0;
                     }
+
                 }
             }
         } catch (\Throwable $e) {
@@ -109,6 +115,9 @@ class MovimentacaoController extends Controller
         }
 
         $file = $request->file('file');
+
+        $uploadedFileUrl = Cloudinary::upload($file->getRealPath())->getSecurePath();
+
         $fileExtension = $file->extension();
         $contentFile = file_get_contents($file->getRealPath());
 
@@ -154,6 +163,7 @@ class MovimentacaoController extends Controller
                     'destinatario' => $descricao[1] ?? $descricao[0],
                     'documento_destinatario' => $descricao[2] ?? NULL,
                     'flg_warning_parcela' => false,
+                    'grupo' => null,
                 ];
 
                 if ( preg_match('/(\d+)\/(\d+)/', $descricao[0], $detailsParcela) ) {
@@ -180,6 +190,7 @@ class MovimentacaoController extends Controller
                             'destinatario' => $descricao[1] ?? $descricao[0],
                             'documento_destinatario' => $descricao[2] ?? NULL,
                             'flg_warning_parcela' => true,
+                            'grupo' => "LAZER",
                         ];
 
                     }
